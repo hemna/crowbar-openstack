@@ -18,60 +18,43 @@
 $(document).ready(function($) {
 
   $( "#parse_yaml" ).click(function() {
-    var raw_yaml = $("#yaml_file").val().trim();
-    var ses_config = YAML.parse(raw_yaml);
+    try {
+      $("#yaml_fail").hide();
+      $("#yaml_success").hide();
 
-    /* Now that we have the yaml parsed */
-    console.log(ses_config.ceph_conf)
-    $("#ceph_conf_cluster_network").val(ses_config.ceph_conf.cluster_network);
-    $("#ceph_conf_cluster_network").trigger('change');
+      var raw_yaml = $("#yaml_file").val().trim();
+      var ses_config = YAML.parse(raw_yaml);
+      $("#yaml_success").effect("highlight", {"color": "#00FF00"}, 3000);
+      $("#yaml_file").effect("highlight", {"color": "#00FF00"}, 3000);
+      console.log("yaml parsed");
 
-    $("#ceph_conf_fsid").val(ses_config.ceph_conf.fsid);
-    $("#ceph_conf_fsid").trigger('change');
+      /* Now that we have the yaml parsed */
+      $("#ceph_conf_cluster_network").val(ses_config.ceph_conf.cluster_network).trigger('change');
+      $("#ceph_conf_fsid").val(ses_config.ceph_conf.fsid).trigger('change');
+      $("#ceph_conf_mon_host").val(ses_config.ceph_conf.mon_host).trigger('change');
+      $("#ceph_conf_mon_initial_members").val(ses_config.ceph_conf.mon_initial_members).trigger('change');
+      $("#ceph_conf_public_network").val(ses_config.ceph_conf.public_network).trigger('change');
 
-    $("#ceph_conf_mon_host").val(ses_config.ceph_conf.mon_host);
-    $("#ceph_conf_mon_host").trigger('change');
+      $("#cinder_key").val(ses_config.cinder.key).trigger('change');
+      $("#cinder_rbd_store_pool").val(ses_config.cinder.rbd_store_pool).trigger('change');
+      $("#cinder_rbd_store_user").val(ses_config.cinder.rbd_store_user).trigger('change');
 
-    $("#ceph_conf_mon_initial_members").val(ses_config.ceph_conf.mon_initial_members);
-    $("#ceph_conf_mon_initial_members").trigger('change');
+      $("#cinder_backup_key").val(ses_config["cinder-backup"].key).trigger('change');
+      $("#cinder_backup_rbd_store_pool").val(ses_config["cinder-backup"].rbd_store_pool).trigger('change');
+      $("#cinder_backup_rbd_store_user").val(ses_config["cinder-backup"].rbd_store_user).trigger('change');
 
-    $("#ceph_conf_public_network").val(ses_config.ceph_conf.public_network);
-    $("#ceph_conf_public_network").trigger('change');
+      $("#glance_key").val(ses_config.glance.key).trigger('change');
+      $("#glance_rbd_store_pool").val(ses_config.glance.rbd_store_pool).trigger('change');
+      $("#glance_rbd_store_user").val(ses_config.glance.rbd_store_user).trigger('change');
 
-    $("#cinder_key").val(ses_config.cinder.key);
-    $("#cinder_key").trigger('change');
+      $("#nova_rbd_store_pool").val(ses_config.nova.rbd_store_pool).trigger('change');
+      $("#radosgw_urls").val(ses_config.radosgw_urls).trigger('change');
 
-    $("#cinder_rbd_store_pool").val(ses_config.cinder.rbd_store_pool);
-    $("#cinder_rbd_store_pool").trigger('change');
-
-    $("#cinder_rbd_store_user").val(ses_config.cinder.rbd_store_user);
-    $("#cinder_rbd_store_user").trigger('change');
-
-    $("#cinder_backup_key").val(ses_config["cinder-backup"].key);
-    $("#cinder_backup_key").trigger('change');
-
-    $("#cinder_backup_rbd_store_pool").val(ses_config["cinder-backup"].rbd_store_pool);
-    $("#cinder_backup_rbd_store_pool").trigger('change');
-
-    $("#cinder_backup_rbd_store_user").val(ses_config["cinder-backup"].rbd_store_user);
-    $("#cinder_backup_rbd_store_user").trigger('change');
-
-
-    $("#glance_key").val(ses_config.glance.key);
-    $("#glance_key").trigger('change');
-
-    $("#glance_rbd_store_pool").val(ses_config.glance.rbd_store_pool);
-    $("#glance_rbd_store_pool").trigger('change');
-
-    $("#glance_rbd_store_user").val(ses_config.glance.rbd_store_user);
-    $("#glance_rbd_store_user").trigger('change');
-
-    $("#nova_rbd_store_pool").val(ses_config.nova.rbd_store_pool);
-    $("#nova_rbd_store_pool").trigger('change');
-
-    $("#radosgw_urls").val(ses_config.radosgw_urls);
-    $("#radosgw_urls").trigger('change');
-
+    } catch(err) {
+      console.log("Failed to process the yaml " + err);
+      $("#yaml_file").effect("highlight", {"color": "#FF0000"}, 3000);
+      $("#yaml_fail").effect("highlight", {"color": "#FF0000"}, 3000);
+    }
   });
 
 });

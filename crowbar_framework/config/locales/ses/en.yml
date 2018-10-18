@@ -10,6 +10,8 @@ en:
         keystone_instance: 'Keystone Instance'
         yaml_header: "Import Config File"
         yaml_file: "SES Config YAML"
+        yaml_success: "Successfully parsed yaml"
+        yaml_failure: "Failed to process yaml"
         parameters:
           ceph_conf_info: 'Ceph Config'
           cinder_info: 'Cinder'

@@ -18,6 +18,11 @@
 
       %div.form-group.pull-left
         %input(id='parse_yaml' class="form-control" type="button" value="Parse Yaml")
+        %div#yaml_success{ :style => "display: none" }
+          = t(".yaml_success")
+
+        %div#yaml_fail{ :style => "display: none" }
+          = t(".yaml_failure")
 
     %fieldset
       %legend
