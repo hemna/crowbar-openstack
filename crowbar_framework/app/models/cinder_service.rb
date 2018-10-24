@@ -97,19 +97,19 @@ class CinderService < OpenstackServiceObject
         ceph_fsid = ses_proposal["attributes"]["ses"]["ceph_conf"]["fsid"]
         cinder_ses = ses_proposal["attributes"]["ses"]["cinder"]
         @logger.debug("ceph_fsid = #{ceph_fsid}")
-        ceph_backend = {"backend_driver": "rbd",
-                        "backend_name": "ses_ceph",
-                        "raw": {
-                          "use_crowbar": false,
-                          "config_file": "/etc/ceph/ceph.conf",
-                          "admin_keyring": "/etc/ceph/ceph.client.cinder.keyring",
-                          "pool": cinder_ses["rbd_pool"],
-                          "user": cinder_ses["rbd_poo_user"],
-                          "secret_uuid": "ass",
-                          "flatten_volume_fromsnapshot": false
-                          }
-                        }
-        base["attributes"][@bc_name]["volumes"].push(ceph_backend)
+        ses_backend = {"backend_driver" => "rbd",
+                       "backend_name" => "ses_ceph",
+                       "rbd" => {
+                         "use_crowbar" => false,
+                         "pool" => cinder_ses["rbd_store_pool"],
+                         "user" => cinder_ses["rbd_store_user"],
+                         "config_file" => "/etc/ceph/ceph.conf",
+                         "admin_keyring" => "/etc/ceph/ceph.client.cinder.keyring",
+                         "secret_uuid" => "",
+                         "flatten_volume_from_snapshot" => false
+                       }
+                      }
+        base["attributes"][@bc_name]["volumes"].push(ses_backend)
     end
 
     @logger.debug("Cinder create_proposal: exiting")
