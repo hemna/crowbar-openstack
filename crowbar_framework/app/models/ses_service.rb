@@ -20,8 +20,6 @@ class SesService < OpenstackServiceObject
     @bc_name = "ses"
     @logger = thelogger
   end
-end
-
 
   class << self
     # turn off multi proposal support till it really works and people ask for
@@ -33,9 +31,9 @@ end
     def role_constraints
       {
         "ses-controller" => {
-          "unique" => false,
+          "unique" => true,
           "count" => 1,
-          "cluster" => true,
+          "cluster" => false,
           "admin" => false,
           "exclude_platform" => {
             "suse" => "< 12.3",
@@ -48,7 +46,7 @@ end
 
   def proposal_dependencies(role)
     answer = []
-    deps = ["cinder", "keystone", "glance", "nova"]
+    deps = ["keystone"]
     deps.each do |dep|
       answer << {
         "barclamp" => dep,
@@ -62,12 +60,13 @@ end
     @logger.debug("SES create_proposal: entering")
     base = super
 
-    nodes = NodeObject.all
-
-    base["attributes"][@bc_name]["cinder_instance"] = find_dep_proposal("cinder")
-    base["attributes"][@bc_name]["nova_instance"] = find_dep_proposal("nova")
-    base["attributes"][@bc_name]["keystone_instance"] = find_dep_proposal("keystone")
-    base["attributes"][@bc_name]["glance_instance"] = find_dep_proposal("glance")
+    #base["attributes"][@bc_name]["cinder_instance"] = Proposal.find_by(barclamp: "cinder")
+    #base["attributes"][@bc_name]["nova_instance"] = Proposal.find_by(barclamp: "nova")
+    #base["attributes"][@bc_name]["keystone_instance"] = Proposal.find_by(barclamp: "keystone")
+    #base["attributes"][@bc_name]["glance_instance"] = Proposal.find_by(barclamp: "glance")
+    secret_uuid = `uuidgen`.strip
+    base["attributes"][@bc_name]["secret_uuid"] = secret_uuid
+    @logger.debug("SES create_proposal: #{secret_uuid}")
 
     @logger.debug("SES create_proposal: exiting")
     base
@@ -84,3 +83,4 @@ end
 
     @logger.debug("Cinder apply_role_pre_chef_call: leaving")
   end
+end
