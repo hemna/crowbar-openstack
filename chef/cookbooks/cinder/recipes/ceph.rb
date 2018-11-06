@@ -29,11 +29,10 @@ node[:cinder][:volumes].each_with_index do |volume, volid|
 
   has_internal ||= true if volume[:rbd][:use_crowbar]
   has_external ||= true unless volume[:rbd][:use_crowbar]
-  Chef::Log.info("WALT has_external = #{has_external}")
 end
 
 if has_internal
-  ceph_env_filter = " AND ceph_config_environment:ceph-config-default"
+  ceph_env_filter = " AND ceph_config_envirOnment:ceph-config-default"
   ceph_servers = search(:node, "roles:ceph-osd#{ceph_env_filter}") || []
   if ceph_servers.length > 0
     include_recipe "ceph::keyring"
@@ -61,39 +60,9 @@ if has_external
     end.run_action(:install)
   end
 
-  Chef::Log.info("SES config Try and load it!")
-  ses_config = BarclampLibrary::Barclamp::Config.load(
-    "openstack",
-    "ses"
-  )
-  Chef::Log.info("SES config = #{ses_config}")
-  # This is an external ceph cluster, it could be SES
-  if !node[:ses].nil? && !node[:ses].empty?
-    Chef::Log.info("Ceph is configred external and we found a SES proposal.")
-    Chef::Log.info("SES create ceph.conf")
-    # SES is enabled, lets create the ceph.conf
-    template "/etc/ceph/ceph.conf" do
-      source "ceph.conf.erb"
-      owner "cinder"
-      group "root"
-      mode "0644"
-      variables(service_name: cinder_volume_service)
-    end
-
-    # Now create the cinder user keyring file
-    Chef::Log.info("SES create cinder keyring ceph.client.#{ses_cinder_client}.keyring")
-    ses_cinder_client = node[:ses][:cinder][:rbd_store_user]
-    template "/etc/ceph/ceph.client.#{ses_cinder_client}.keyring" do
-      source "client.keyring.erb"
-      owner "cinder"
-      group "root"
-      mode "0644"
-      variables(client_name: ses_cinder_client,
-                keyring_value: node[:ses][:cinder][:key])
-    end
-  else
-    Chef::Log.info("Ceph is configred external and we don't have a SES proposal.")
-  end
+  # call the SES recipe to create the ceph.conf and keyrings
+  Chef::Log.info("Calling SES to create configs")
+  include_recipe "ses::create_configs"
 end
 
 # Second loop to do our setup
