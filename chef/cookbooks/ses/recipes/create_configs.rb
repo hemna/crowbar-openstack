@@ -17,14 +17,24 @@
 # limitations under the License.
 #
 
+def write_keyring_file(ses_config, service_name)
+  Chef::Log.info("SES config write_keyring_file #{ses_config} for #{service_name}")
+  client_name = ses_config[service_name]["rbd_store_user"]
+  keyring_value = ses_config[service_name]["rbd_store_user"]
+  Chef::Log.info("SES create #{service_name} keyring ceph.client.#{client_name}.keyring")
+  template "/etc/ceph/ceph.client.#{client_name}.keyring" do
+    source "client.keyring.erb"
+    owner "cinder"
+    group "root"
+    mode "0644"
+    variables(client_name: client_name,
+              keyring_value: keyring_value)
+  end
+end
 
 # This recipe creates the /etc/ceph/ceph.conf
 # and the keyring files needed by the services
 Chef::Log.info("SES: create_configs started")
-
-
-
-Chef::Log.info("SES: create_configs done")
 
 ceph_conf  = search(:node, "ses:ceph_conf") || []
 Chef::Log.info("SES: ceph_conf = #{ceph_conf}")
@@ -37,7 +47,7 @@ ses_config = BarclampLibrary::Barclamp::Config.load(
 Chef::Log.info("SES config = #{ses_config}")
 Chef::Log.info("node = #{node}")
 # This is an external ceph cluster, it could be SES
-if !node[:ses].nil? && !node[:ses].empty?
+if !ses_config.nil? && !ses_config.empty?
   Chef::Log.info("Ceph is configred external and we found a SES proposal.")
   Chef::Log.info("SES create ceph.conf")
   # SES is enabled, lets create the ceph.conf
@@ -46,18 +56,20 @@ if !node[:ses].nil? && !node[:ses].empty?
     owner "cinder"
     group "root"
     mode "0644"
-    variables(service_name: cinder_volume_service)
+    variables(fsid: ses_config["ceph_conf"]["fsid"],
+              mon_initial_members: ses_config["ceph_conf"]["mon_initial_members"],
+              mon_host: ses_config["ceph_conf"]["mon_host"],
+              public_network: ses_config["ceph_conf"]["public_network"],
+              cluster_network: ses_config["ceph_conf"]["cluster_network"],
+              cinder_user: ses_config["cinder"]["rbd_store_user"],
+              cinder_backup_user: ses_config["cinder_backup"]["rbd_store_user"],
+              glance_user: ses_config["glance"]["rbd_store_user"])
   end
 
-  # Now create the cinder user keyring file
-  Chef::Log.info("SES create cinder keyring ceph.client.#{ses_cinder_client}.keyring")
-  ses_cinder_client = node[:ses][:cinder][:rbd_store_user]
-  template "/etc/ceph/ceph.client.#{ses_cinder_client}.keyring" do
-    source "client.keyring.erb"
-    owner "cinder"
-    group "root"
-    mode "0644"
-    variables(client_name: ses_cinder_client,
-              keyring_value: node[:ses][:cinder][:key])
-  end
+  # Now create the user keyring files
+  write_keyring_file(ses_config, "cinder")
+  write_keyring_file(ses_config, "cinder_backup")
+  write_keyring_file(ses_config, "glance")
 end
+
+Chef::Log.info("SES: create_configs done")
