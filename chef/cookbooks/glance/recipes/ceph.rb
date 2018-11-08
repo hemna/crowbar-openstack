@@ -28,6 +28,12 @@ if ceph_servers.length > 0
   # file is the right one
   node.default[:glance][:rbd][:store_ceph_conf] = ceph_conf
 else
+  if node[:platform_family] == "suse"
+    # install package in compile phase because we will run "ceph -s"
+    package "ceph-common" do
+      action :nothing
+    end.run_action(:install)
+  end
 
   Chef::Log.info("Calling SES to create configs")
   include_recipe "ses::create_configs"
@@ -38,13 +44,6 @@ else
   # If Ceph configuration file is present, external Ceph cluster will be used,
   # we have to install ceph client packages
   return if ceph_conf.empty? || !File.exist?(ceph_conf)
-
-  if node[:platform_family] == "suse"
-    # install package in compile phase because we will run "ceph -s"
-    package "ceph-common" do
-      action :nothing
-    end.run_action(:install)
-  end
 
   if !admin_keyring.empty? && File.exist?(admin_keyring)
     Chef::Log.info("Using external ceph cluster for glance, with automatic setup.")
