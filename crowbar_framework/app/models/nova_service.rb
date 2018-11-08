@@ -202,6 +202,18 @@ class NovaService < OpenstackServiceObject
       rm -f $t ${t}.pub
     ]
 
+    @logger.debug("Nova create_proposal: Find SES barclamp?")
+    ses_proposal = Proposal.find_by(barclamp: "ses")
+    if ses_proposal.nil?
+      @logger.debug("Nova create_proposal: did NOT find SES barclamp")
+    else
+      @logger.debug("Nova create_proposal: FOUND ses barclamp")
+      cinder_ses = ses_proposal["attributes"]["ses"]["cinder"]
+      secret_uuid = ses_proposal["attributes"]["ses"]["secret_uuid"]
+      base["attributes"]["nova"]["rbd"]["user"] = cinder_ses["rbd_store_user"]
+      base["attributes"]["nova"]["rbd"]["secret_uuid"] = secret_uuid
+    end
+
     @logger.debug("Nova create_proposal: exiting")
     base
   end
