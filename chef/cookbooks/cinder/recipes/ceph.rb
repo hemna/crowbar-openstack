@@ -62,6 +62,7 @@ if has_external
 
   # call the SES recipe to create the ceph.conf and keyrings
   Chef::Log.info("Calling SES to create configs")
+  node.run_state["ses_service"] = "cinder"
   include_recipe "ses::create_configs"
 end
 
@@ -92,7 +93,7 @@ node[:cinder][:volumes].each_with_index do |volume, volid|
     check_ceph = Mixlib::ShellOut.new(cmd)
 
     unless check_ceph.run_command.stdout.match("(HEALTH_OK|HEALTH_WARN)")
-      Chef::Log.info("Ceph cluster is not healthy; skipping the ceph setup for backend #{volume[:backend_name]}")
+      Chef::Log.info("Ceph cluster is not healthy; Cinder skipping the ceph setup for backend #{volume[:backend_name]}")
       next
     end
   end
