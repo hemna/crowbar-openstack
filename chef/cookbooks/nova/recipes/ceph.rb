@@ -59,9 +59,7 @@ if has_external
 
   # call the SES recipe to create the ceph.conf and keyrings
   Chef::Log.info("Calling SES to create configs")
-  Chef::Log.info("SES NODE = #{node}")
   node.run_state["ses_service"] = "nova"
-  Chef::Log.info("Calling SES ses_service = #{node.run_state}")
   include_recipe "ses::create_configs"
 end
 

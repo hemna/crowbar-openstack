@@ -50,13 +50,6 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
     ceph_conf = volume[:rbd][:config_file]
     admin_keyring = volume[:rbd][:admin_keyring]
 
-    Chef::Log.info("Looking for ceph_conf '#{ceph_conf}'")
-    ass_exists = File.exist?(ceph_conf)
-    Chef::Log.info(" Does '#{ceph_conf} exist? '#{ass_exists}' on #{node}")
-
-    ass_files = Dir.entries('/etc/ceph')
-    Chef::Log.info("Files in /etc/ceph = '#{ass_files}'")
-
     if ceph_conf.empty? || !File.exist?(ceph_conf)
       Chef::Log.info("Ceph configuration file is missing; skipping the ceph setup for backend #{volume[:backend_name]}")
       next
@@ -82,13 +75,10 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
 
   end
 
-  Chef::Log.info("Run ruby_block")
   ruby_block "save nova key as libvirt secret" do
     block do
       # Check if libvirt is installed and started
-      Chef::Log.info("Check to see if virsh is installed")
       if system("virsh hostname &> /dev/null")
-        Chef::Log.info("Virsh is installed, now look for an existing secret")
 
         # First remove conflicting secrets due to same usage name
         virsh_secret = Mixlib::ShellOut.new("virsh secret-list")
@@ -101,7 +91,6 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
         end
         secret_lines.shift(2)
 
-        Chef::Log.info("Delete a possible dupe secret")
         secret_lines.each do |secret_line|
           secret_uuid = secret_line.split(" ")[0]
           cmd = ["virsh", "secret-dumpxml", secret_uuid]
@@ -131,22 +120,18 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
         end
 
         # Lets see if we have a SES barclamp keyring file
-        # Check if rbd keyring was uploaded manually by user
+        # Check if rbd keyring was created by SES barclamp
         client_keyring = "/etc/ceph/client.ceph.#{rbd_user}.keyring"
         Chef::Log.info("Check to see if we have a #{client_keyring} file.")
         client_key = ''
         if File.exist?(client_keyring)
           f = File.open(client_keyring)
           f.each do |line|
-            Chef::Log.info("Line #{line}")
             if match = line.match("key\s*=\s*(.+)")
-              Chef::Log.info("Found match in #{line}")
               client_key = match[1]
-              Chef::Log.info("Found keyvalue #{client_key} from SES.")
               break
             end
           end
-          Chef::Log.info("Found keyvalue #{client_key} from SES.")
         else
           if !admin_keyring.empty? && File.exist?(admin_keyring)
             # Now add our secret and its value
@@ -208,7 +193,7 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
           File.delete(secret_file_path)
         end
       else
-        Chef::Log.info("SES virsh isn't installed, so we are hosed.")
+        Chef::Log.info("Virsh isn't running, we can't install virsh secret.")
       end
     end
   end
