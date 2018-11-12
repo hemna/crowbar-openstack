@@ -54,6 +54,7 @@ if has_external
 
   # call the SES recipe to create the ceph.conf and keyrings
   Chef::Log.info("Calling SES to create configs")
+  Chef::Log.info("SES NODE = #{node}")
   node.run_state["ses_service"] = "nova"
   Chef::Log.info("Calling SES ses_service = #{node.run_state}")
   include_recipe "ses::create_configs"
@@ -74,6 +75,12 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
     admin_keyring = volume[:rbd][:admin_keyring]
 
     Chef::Log.info("Looking for ceph_conf '#{ceph_conf}'")
+    ass_exists = File.exist?(ceph_conf)
+    Chef::Log.info(" Does '#{ceph_conf} exist? '#{ass_exists}' on #{node}")
+
+    ass_files = Dir.entries('/etc/ceph')
+    Chef::Log.info("Files in /etc/ceph = '#{ass_files}'")
+
 
     if ceph_conf.empty? || !File.exist?(ceph_conf)
       Chef::Log.info("Ceph configuration file is missing; skipping the ceph setup for backend #{volume[:backend_name]}")
@@ -81,7 +88,8 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
     end
 
     if !admin_keyring.empty? && File.exist?(admin_keyring)
-      cmd = ["ceph", "-k", admin_keyring, "-c", ceph_conf, "-s"]
+      #cmd = ["ceph", "-k", admin_keyring, "-c", ceph_conf, "-s"]
+      cmd = ["ceph", "--id", rbd_user, "-c", ceph_conf, "-s"]
       check_ceph = Mixlib::ShellOut.new(cmd)
 
       unless check_ceph.run_command.stdout.match("(HEALTH_OK|HEALTH_WARN)")

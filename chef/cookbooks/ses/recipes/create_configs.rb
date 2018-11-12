@@ -56,8 +56,8 @@ if !ses_config.nil? && !ses_config.empty?
   # SES is enabled, lets create the ceph.conf
   template "/etc/ceph/ceph.conf" do
     source "ceph.conf.erb"
-    owner "cinder"
-    group "root"
+    owner "root"
+    group "#{ses_service}"
     mode "0644"
     variables(fsid: ses_config["ceph_conf"]["fsid"],
               mon_initial_members: ses_config["ceph_conf"]["mon_initial_members"],
@@ -74,5 +74,8 @@ if !ses_config.nil? && !ses_config.empty?
   write_keyring_file(ses_config, "cinder_backup", ses_service)
   write_keyring_file(ses_config, "glance", ses_service)
 end
+
+conf_exists = File.exist?("/etc/ceph/ceph.conf")
+Chef::Log.info("/etc/ceph/ceph.conf exists? #{conf_exists} on node #{node}")
 
 Chef::Log.info("SES: create_configs done")
