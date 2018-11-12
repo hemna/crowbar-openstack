@@ -54,6 +54,8 @@ if has_external
 
   # call the SES recipe to create the ceph.conf and keyrings
   Chef::Log.info("Calling SES to create configs")
+  node.run_state["ses_service"] = "nova"
+  Chef::Log.info("Calling SES ses_service = #{node.run_state}")
   include_recipe "ses::create_configs"
 end
 
@@ -70,6 +72,8 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
   else
     ceph_conf = volume[:rbd][:config_file]
     admin_keyring = volume[:rbd][:admin_keyring]
+
+    Chef::Log.info("Looking for ceph_conf '#{ceph_conf}'")
 
     if ceph_conf.empty? || !File.exist?(ceph_conf)
       Chef::Log.info("Ceph configuration file is missing; skipping the ceph setup for backend #{volume[:backend_name]}")

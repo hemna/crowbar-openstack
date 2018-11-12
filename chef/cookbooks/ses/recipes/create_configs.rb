@@ -17,15 +17,15 @@
 # limitations under the License.
 #
 
-def write_keyring_file(ses_config, service_name)
-  Chef::Log.info("SES config write_keyring_file #{ses_config} for #{service_name}")
+def write_keyring_file(ses_config, service_name, group_name)
+  Chef::Log.info("SES config write_keyring_file #{ses_config} for #{service_name} and group #{group_name}")
   client_name = ses_config[service_name]["rbd_store_user"]
   keyring_value = ses_config[service_name]["key"]
   Chef::Log.info("SES create #{service_name} keyring ceph.client.#{client_name}.keyring")
   template "/etc/ceph/client.ceph.#{client_name}.keyring" do
     source "client.keyring.erb"
-    owner "cinder"
-    group "root"
+    owner "root"
+    group "#{group_name}"
     mode "0644"
     variables(client_name: client_name,
               keyring_value: keyring_value)
@@ -34,7 +34,10 @@ end
 
 # This recipe creates the /etc/ceph/ceph.conf
 # and the keyring files needed by the services
-Chef::Log.info("SES: create_configs started")
+# ses_service is the name of the service using ceph
+# which should be nova, cinder, glance
+ses_service = node.run_state["ses_service"]
+Chef::Log.info("SES: create_configs for service #{ses_service}")
 
 ceph_conf  = search(:node, "ses:ceph_conf") || []
 Chef::Log.info("SES: ceph_conf = #{ceph_conf}")
@@ -67,9 +70,9 @@ if !ses_config.nil? && !ses_config.empty?
   end
 
   # Now create the user keyring files
-  write_keyring_file(ses_config, "cinder")
-  write_keyring_file(ses_config, "cinder_backup")
-  write_keyring_file(ses_config, "glance")
+  write_keyring_file(ses_config, "cinder", ses_service)
+  write_keyring_file(ses_config, "cinder_backup", ses_service)
+  write_keyring_file(ses_config, "glance", ses_service)
 end
 
 Chef::Log.info("SES: create_configs done")
