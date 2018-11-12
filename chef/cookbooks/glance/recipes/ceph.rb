@@ -36,6 +36,7 @@ else
   end
 
   Chef::Log.info("Calling SES to create configs")
+  node.run_state["ses_service"] = "glance"
   include_recipe "ses::create_configs"
 
   ceph_conf = node[:glance][:rbd][:store_ceph_conf]
