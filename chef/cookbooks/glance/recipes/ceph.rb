@@ -67,20 +67,29 @@ end
 ceph_user = node[:glance][:rbd][:store_user]
 ceph_pool = node[:glance][:rbd][:store_pool]
 
-ceph_caps = { "mon" => "allow r", "osd" => "allow class-read object_prefix rbd_children, allow rwx pool=#{ceph_pool}" }
+# If this is an external SES cluster, it could have been setup already
+# So test to see if we have access to the pool first.
+# If we don't, then try and create it
+cmd = ["rbd", "--id", ceph_user, "ls", ceph_pool ]
+check_pool = Mixlib::ShellOut.new(cmd)
+check_pool.run_command
+if check_pool.exitstatus() != 0
+  # we failed to auth, so lets try to create it.
+  ceph_caps = { "mon" => "allow r", "osd" => "allow class-read object_prefix rbd_children, allow rwx pool=#{ceph_pool}" }
 
-ceph_client ceph_user do
-  ceph_conf ceph_conf
-  admin_keyring admin_keyring
-  caps ceph_caps
-  keyname "client.#{ceph_user}"
-  filename "/etc/ceph/ceph.client.#{ceph_user}.keyring"
-  owner "root"
-  group node[:glance][:group]
-  mode 0640
-end
+  ceph_client ceph_user do
+    ceph_conf ceph_conf
+    admin_keyring admin_keyring
+    caps ceph_caps
+    keyname "client.#{ceph_user}"
+    filename "/etc/ceph/ceph.client.#{ceph_user}.keyring"
+    owner "root"
+    group node[:glance][:group]
+    mode 0640
+  end
 
-ceph_pool ceph_pool do
-  ceph_conf ceph_conf
-  admin_keyring admin_keyring
+  ceph_pool ceph_pool do
+    ceph_conf ceph_conf
+    admin_keyring admin_keyring
+  end
 end
