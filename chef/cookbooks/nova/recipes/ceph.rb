@@ -90,6 +90,7 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
     if !admin_keyring.empty? && File.exist?(admin_keyring)
       #cmd = ["ceph", "-k", admin_keyring, "-c", ceph_conf, "-s"]
       cmd = ["ceph", "--id", rbd_user, "-c", ceph_conf, "-s"]
+      Log::info("Check ceph -s with #{cmd}")
       check_ceph = Mixlib::ShellOut.new(cmd)
 
       unless check_ceph.run_command.stdout.match("(HEALTH_OK|HEALTH_WARN)")
