@@ -81,14 +81,12 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
     ass_files = Dir.entries('/etc/ceph')
     Chef::Log.info("Files in /etc/ceph = '#{ass_files}'")
 
-
     if ceph_conf.empty? || !File.exist?(ceph_conf)
       Chef::Log.info("Ceph configuration file is missing; skipping the ceph setup for backend #{volume[:backend_name]}")
       next
     end
 
     if !admin_keyring.empty? && File.exist?(admin_keyring)
-      #cmd = ["ceph", "-k", admin_keyring, "-c", ceph_conf, "-s"]
       cmd = ["ceph", "--id", rbd_user, "-c", ceph_conf, "-s"]
       Log::info("Check ceph -s with #{cmd}")
       check_ceph = Mixlib::ShellOut.new(cmd)
@@ -108,10 +106,13 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
 
   end
 
+  Chef::Log.info("Run ruby_block")
   ruby_block "save nova key as libvirt secret" do
     block do
       # Check if libvirt is installed and started
+      Chef::Log.info("Check to see if virsh is installed")
       if system("virsh hostname &> /dev/null")
+        Chef::Log.info("Virsh is installed, now look for an existing secret")
 
         # First remove conflicting secrets due to same usage name
         virsh_secret = Mixlib::ShellOut.new("virsh secret-list")
@@ -124,6 +125,7 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
         end
         secret_lines.shift(2)
 
+        Chef::Log.info("Delete a possible dupe secret")
         secret_lines.each do |secret_line|
           secret_uuid = secret_line.split(" ")[0]
           cmd = ["virsh", "secret-dumpxml", secret_uuid]
@@ -145,38 +147,53 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
           end
 
           if undefine
+            Chef::Log.info("undefine existing secret for #{secret_uuid}")
             cmd = ["virsh", "secret-undefine", secret_uuid]
             virsh_secret_undefine = Mixlib::ShellOut.new(cmd)
             virsh_secret_undefine.run_command
           end
         end
 
-        if !admin_keyring.empty? && File.exist?(admin_keyring)
-          # Now add our secret and its value
-          cmd = [
-            "ceph",
-            "-k", admin_keyring,
-            "-c", ceph_conf,
-            "auth",
-            "get-or-create-key",
-            "client.#{rbd_user}"
-          ]
-
-          ceph_get_key = Mixlib::ShellOut.new(cmd)
-          client_key = ceph_get_key.run_command.stdout.strip
-          ceph_get_key.error!
-        else
-          # Check if rbd keyring was uploaded manually by user
-          client_keyring = "/etc/ceph/ceph.client.#{rbd_user}.keyring"
-          if File.exist?(client_keyring)
-            f = File.open(client_keyring)
-            f.each do |line|
-              if match = line.match("key\s*=\s*(.+)")
-                client_key = match[1]
-                break
-              end
+        # Lets see if we have a SES barclamp keyring file
+        # Check if rbd keyring was uploaded manually by user
+        client_keyring = "/etc/ceph/client.ceph.#{rbd_user}.keyring"
+        Chef::Log.info("Check to see if we have a #{client_keyring} file.")
+        if File.exist?(client_keyring)
+          f = File.open(client_keyring)
+          f.each do |line|
+            if match = line.match("key\s*=\s*(.+)")
+              client_key = match[1]
+              break
             end
           end
+          Chef::Log.info("Found keyvalue #{client_key} from SES.")
+        else
+          if !admin_keyring.empty? && File.exist?(admin_keyring)
+            # Now add our secret and its value
+            cmd = [
+              "ceph",
+              "-k", admin_keyring,
+              "-c", ceph_conf,
+              "auth",
+              "get-or-create-key",
+              "client.#{rbd_user}"
+            ]
+
+            ceph_get_key = Mixlib::ShellOut.new(cmd)
+            client_key = ceph_get_key.run_command.stdout.strip
+            ceph_get_key.error!
+          else
+            # Check if rbd keyring was uploaded manually by user
+            client_keyring = "/etc/ceph/ceph.client.#{rbd_user}.keyring"
+            if File.exist?(client_keyring)
+              f = File.open(client_keyring)
+              f.each do |line|
+                if match = line.match("key\s*=\s*(.+)")
+                  client_key = match[1]
+                  break
+                end
+              end
+            end
         end
 
         cmd = ["virsh", "secret-get-value", rbd_uuid]
@@ -193,6 +210,7 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
                                 "</secret>"
           File.write(secret_file_path, secret_file_content)
 
+          Chef::Log.info("Create new virsh secret #{rbd_uuid}")
           cmd = ["virsh", "secret-define", "--file", secret_file_path]
           virsh_secret_define = Mixlib::ShellOut.new(cmd)
           secret_uuid_out = virsh_secret_define.run_command.stdout
