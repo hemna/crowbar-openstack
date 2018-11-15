@@ -194,6 +194,7 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
                 end
               end
             end
+          end
         end
 
         cmd = ["virsh", "secret-get-value", rbd_uuid]
@@ -226,6 +227,8 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
 
           File.delete(secret_file_path)
         end
+      else
+        Chef::Log.info("SES virsh isn't installed, so we are hosed.") 
       end
     end
   end
