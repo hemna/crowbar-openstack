@@ -93,7 +93,7 @@ node[:cinder][:volumes].each_with_index do |volume, volid|
     check_ceph = Mixlib::ShellOut.new(cmd)
 
     unless check_ceph.run_command.stdout.match("(HEALTH_OK|HEALTH_WARN)")
-      Chef::Log.info("Ceph cluster is not healthy; skipping the ceph setup for backend #{volume[:backend_name]}")
+      Chef::Log.info("Ceph cluster is not healthy; Cinder skipping the ceph setup for backend #{volume[:backend_name]}")
       next
     end
   end
