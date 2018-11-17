@@ -134,11 +134,15 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
         # Check if rbd keyring was uploaded manually by user
         client_keyring = "/etc/ceph/client.ceph.#{rbd_user}.keyring"
         Chef::Log.info("Check to see if we have a #{client_keyring} file.")
+        client_key = ''
         if File.exist?(client_keyring)
           f = File.open(client_keyring)
           f.each do |line|
+            Chef::Log.info("Line #{line}")
             if match = line.match("key\s*=\s*(.+)")
+              Chef::Log.info("Found match in #{line}")
               client_key = match[1]
+              Chef::Log.info("Found keyvalue #{client_key} from SES.")
               break
             end
           end
