@@ -77,6 +77,13 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
     ceph_conf = volume[:rbd][:config_file]
     admin_keyring = volume[:rbd][:admin_keyring]
 
+    Chef::Log.info("Looking for ceph_conf '#{ceph_conf}'")
+    ass_exists = File.exist?(ceph_conf)
+    Chef::Log.info(" Does '#{ceph_conf} exist? '#{ass_exists}' on #{node}")
+
+    ass_files = Dir.entries('/etc/ceph')
+    Chef::Log.info("Files in /etc/ceph = '#{ass_files}'")
+
     if ceph_conf.empty? || !File.exist?(ceph_conf)
       Chef::Log.info("Ceph configuration file is missing; skipping the ceph setup for backend #{volume[:backend_name]}")
       next
