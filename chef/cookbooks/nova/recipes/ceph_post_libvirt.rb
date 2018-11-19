@@ -112,7 +112,6 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
           end
 
           if undefine
-            Chef::Log.info("undefine existing secret for #{secret_uuid}")
             cmd = ["virsh", "secret-undefine", secret_uuid]
             virsh_secret_undefine = Mixlib::ShellOut.new(cmd)
             virsh_secret_undefine.run_command
