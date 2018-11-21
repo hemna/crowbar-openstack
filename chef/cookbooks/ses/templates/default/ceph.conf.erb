@@ -18,8 +18,8 @@ mon health preluminous compat warning = false
 rbd default features = 3
 
 [client.<%= @cinder_user %>]
-keyring=/etc/ceph/client.ceph.<%= @cinder_user %>.keyring
+keyring=/etc/ceph/ceph.client.<%= @cinder_user %>.keyring
 [client.<%= @cinder_backup_user %>]
-keyring=/etc/ceph/client.ceph.<%= @cinder_backup_user %>.keyring
+keyring=/etc/ceph/ceph.client.<%= @cinder_backup_user %>.keyring
 [client.<%= @glance_user %>]
-keyring=/etc/ceph/client.ceph.<%= @glance_user %>.keyring
+keyring=/etc/ceph/ceph.client.<%= @glance_user %>.keyring

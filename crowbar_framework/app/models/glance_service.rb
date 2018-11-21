@@ -82,7 +82,7 @@ class GlanceService < OpenstackServiceObject
         rbd_store_pool = ses_ceph["glance"]["rbd_store_pool"]
 
         base["attributes"]["glance"]["rbd"]["store_ceph_conf"] = "/etc/ceph/ceph.conf"
-        keyring_file = "/etc/ceph/client.ceph.#{rbd_store_user}.keyring"
+        keyring_file = "/etc/ceph/ceph.client.#{rbd_store_user}.keyring"
         base["attributes"]["glance"]["rbd"]["store_admin_keyring"] = keyring_file
         base["attributes"]["glance"]["rbd"]["store_user"] = rbd_store_user
         base["attributes"]["glance"]["rbd"]["store_pool"] = rbd_store_pool

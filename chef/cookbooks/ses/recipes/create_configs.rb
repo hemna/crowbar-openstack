@@ -22,7 +22,7 @@ def write_keyring_file(ses_config, service_name, group_name)
   client_name = ses_config[service_name]["rbd_store_user"]
   keyring_value = ses_config[service_name]["key"]
   Chef::Log.info("SES create #{service_name} keyring ceph.client.#{client_name}.keyring")
-  template "/etc/ceph/client.ceph.#{client_name}.keyring" do
+  template "/etc/ceph/ceph.client.#{client_name}.keyring" do
     source "client.keyring.erb"
     owner "root"
     group "#{group_name}"
