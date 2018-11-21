@@ -97,6 +97,8 @@ class CinderService < OpenstackServiceObject
         ceph_fsid = ses_proposal["attributes"]["ses"]["ceph_conf"]["fsid"]
         cinder_ses = ses_proposal["attributes"]["ses"]["cinder"]
         secret_uuid = ses_proposal["attributes"]["ses"]["secret_uuid"]
+        rbd_store_user = cinder_ses["rbd_store_user"]
+        keyring_file = "/etc/ceph/ceph.client.#{rbd_store_user}.keyring"
         @logger.debug("ceph_fsid = #{ceph_fsid}")
         ses_backend = {"backend_driver" => "rbd",
                        "backend_name" => "ses_ceph",
@@ -105,7 +107,7 @@ class CinderService < OpenstackServiceObject
                          "pool" => cinder_ses["rbd_store_pool"],
                          "user" => cinder_ses["rbd_store_user"],
                          "config_file" => "/etc/ceph/ceph.conf",
-                         "admin_keyring" => "/etc/ceph/client.ceph.cinder.keyring",
+                         "admin_keyring" => keyring_file,
                          "secret_uuid" => secret_uuid,
                          "flatten_volume_from_snapshot" => false
                        }

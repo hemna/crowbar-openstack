@@ -121,7 +121,7 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
 
         # Lets see if we have a SES barclamp keyring file
         # Check if rbd keyring was created by SES barclamp
-        client_keyring = "/etc/ceph/client.ceph.#{rbd_user}.keyring"
+        client_keyring = "/etc/ceph/ceph.client.#{rbd_user}.keyring"
         Chef::Log.info("Check to see if we have a #{client_keyring} file.")
         client_key = ''
         if File.exist?(client_keyring)
@@ -147,18 +147,6 @@ cinder_controller[:cinder][:volumes].each_with_index do |volume, volid|
             ceph_get_key = Mixlib::ShellOut.new(cmd)
             client_key = ceph_get_key.run_command.stdout.strip
             ceph_get_key.error!
-          else
-            # Check if rbd keyring was uploaded manually by user
-            client_keyring = "/etc/ceph/ceph.client.#{rbd_user}.keyring"
-            if File.exist?(client_keyring)
-              f = File.open(client_keyring)
-              f.each do |line|
-                if match = line.match("key\s*=\s*(.+)")
-                  client_key = match[1]
-                  break
-                end
-              end
-            end
           end
         end
 
