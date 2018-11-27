@@ -27,11 +27,9 @@ class SesService < OpenstackServiceObject
     def self.allow_multiple_proposals?
       false
     end
-
   end
 
   def create_proposal
-    @logger.debug("SES create_proposal: entering")
     base = super
 
     #base["attributes"][@bc_name]["cinder_instance"] = Proposal.find_by(barclamp: "cinder")
@@ -40,20 +38,13 @@ class SesService < OpenstackServiceObject
     #base["attributes"][@bc_name]["glance_instance"] = Proposal.find_by(barclamp: "glance")
     secret_uuid = `uuidgen`.strip
     base["attributes"][@bc_name]["secret_uuid"] = secret_uuid
-    @logger.debug("SES create_proposal: #{secret_uuid}")
-
-    @logger.debug("SES create_proposal: exiting")
     base
   end
 
   def validate_proposal_after_save(proposal)
-
     super
   end
 
   def apply_role_pre_chef_call(old_role, role, all_nodes)
-    @logger.debug("Cinder apply_role_pre_chef_call: entering #{all_nodes.inspect}")
-
-    @logger.debug("Cinder apply_role_pre_chef_call: leaving")
   end
 end
